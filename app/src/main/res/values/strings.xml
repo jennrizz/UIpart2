@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">UIpart2</string>
+    <string name="queue">Song Added to QUEUE</string>
+    <string name="delete">Song Removed</string>
 </resources>

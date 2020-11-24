@@ -27,7 +27,4 @@ class listAdapter( var mcontext:Context, var resources:Int, var items:List<strin
     override fun getItemId(position: Int): Long {
         return super.getItemId(position)
     }
-    fun hey(): Boolean{
-        return true
-    }
 }

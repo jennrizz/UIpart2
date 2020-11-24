@@ -11,24 +11,25 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.Toast
-import com.example.uipart2.listAdapter
+import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
     var queuedList = arrayListOf<String>()
     val songNames = arrayListOf<String>("So What", "Fly me to the Moon", "Mood Indigo", "Take Five", "Strange Fruit",
         "Round Midnight", "Giant Steps", "Only Human", "Don't Start Now", "7 Rings", "Sucker", "I Don't Care", "Bad Guy", "Juice", "Talk",
         "Wow", "Fancy", "Amazed", "The Dance", "The Gambler", "Sixteen Tons", "I Hope", "I Hope You Dance")
-
+    var list = mutableListOf<stringArray>()
+    lateinit var adapter: listAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setTitle("UIElement_HOME")
-        var list = mutableListOf<stringArray>()
         val songListView = findViewById<ListView>(R.id.song_list)
         for (i in songNames){
             list.add(stringArray(i))
         }
-        songListView.adapter =  listAdapter(this,R.layout.main_row, list)
+        adapter = listAdapter(this,R.layout.main_row, list)
+        songListView.adapter =  adapter
         registerForContextMenu(songListView)
     }
 
@@ -68,12 +69,27 @@ class MainActivity : AppCompatActivity() {
     override fun onContextItemSelected(item: MenuItem): Boolean {
         val info = item.menuInfo as AdapterView.AdapterContextMenuInfo
         val songPosition = info.position
+        val song = songNames.get(songPosition)
         return when(item.itemId){
             R.id.add_queue -> {
-                val song = songNames.get(songPosition)
                 queuedList.add(song)
+                val  snack = Snackbar.make(findViewById(R.id.coordinatorLayoutroot), "Add to QUEUE", Snackbar.LENGTH_LONG)
+                        .setAction("View",View.OnClickListener {
+                            val intent1 = Intent(this, QueuedSongsActivity::class.java)
+                            val bundle = Bundle()
+                            bundle.putSerializable("songNames",queuedList)
+                            intent1.putExtra("bundle", bundle)
+                            startActivity(intent1)
+                        })
+                snack.show()
                 true
                 }
+            R.id.delete ->{
+                list.removeAt(songPosition)
+                adapter.notifyDataSetChanged()
+                Toast.makeText(this,R.string.delete, Toast.LENGTH_SHORT).show()
+                true
+            }
             else -> return super.onContextItemSelected(item)
         }
     }

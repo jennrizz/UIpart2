@@ -29,13 +29,15 @@ class AlbumsActivity : AppCompatActivity(){
                     startActivity(Intent(this, CountryAlbum::class.java))
                 }
                 else if (imgPos == pos2){
-                    startActivity(Intent(this, jazzAlbum::class.java))
+                    startActivity(Intent(this, popAlbum::class.java))
                 }
                 else if (imgPos == pos3){
-                    startActivity(Intent(this, popAlbum::class.java))
+                    startActivity(Intent(this, jazzAlbum::class.java))
                 }
                 else true
             }
+
+
     }
     private fun data(): ArrayList<imgArray> {
         var arrayList = arrayListOf<imgArray>()
@@ -44,22 +46,4 @@ class AlbumsActivity : AppCompatActivity(){
         arrayList.add(imgArray(R.drawable.jazz_album))
         return  arrayList
     }
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.queue -> {
-                startActivity(Intent(this, QueuedSongsActivity::class.java))
-                true
-            }
-            R.id.songs -> {
-                startActivity(Intent(this, MainActivity::class.java))
-                true
-            }
-            R.id.albums -> {
-                true
-            }
-            else -> return super.onOptionsItemSelected(item)
-        }
-
-    }
-
 }

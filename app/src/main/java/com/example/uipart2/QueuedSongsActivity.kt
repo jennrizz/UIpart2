@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -18,26 +19,28 @@ import android.widget.AdapterView
 import android.widget.ListView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
+import com.example.uipart2.adapter.listAdapter
 
 class QueuedSongsActivity : AppCompatActivity() {
     lateinit var adapter: listAdapter
-    val list = arrayListOf<stringArray>()
+    var list = mutableListOf<stringArray>()
     lateinit var notificationManager : NotificationManager
     lateinit var notificationChannel: NotificationChannel
     lateinit var builder : Notification.Builder
     private val channelId = "i.apps.notifications"
     private val description = "Test Notification"
-    lateinit var songNames : ArrayList<String>
+    val dbqueueHandler = queueTableHandler(this)
+    lateinit var songTitle : String
+    lateinit var artistName : String
+    lateinit var albumTitle : String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_queued_songs)
         setTitle("Queued Songs")
-        var bundle = intent.getBundleExtra("bundle") as Bundle
-        songNames = bundle.getSerializable("songNames") as ArrayList<String>
         val queueList = findViewById<ListView>(R.id.queued_list)
-        for (i in songNames){
-            list.add(stringArray(i))
-        }
+        list = dbqueueHandler.readAll()
         adapter = listAdapter(this,R.layout.main_row, list)
         if (adapter.count == 0){
             notification()
@@ -54,15 +57,27 @@ class QueuedSongsActivity : AppCompatActivity() {
     override fun onContextItemSelected(item: MenuItem): Boolean {
         val info = item.menuInfo as AdapterView.AdapterContextMenuInfo
         val songPosition = info.position
+        val songId = list[songPosition].id
+        dbqueueHandler.readOne(songId)
+        songTitle = list[songPosition].songName
+        artistName = list[songPosition].artistName
+        albumTitle = list[songPosition].albumName
+        val song = stringArray(songId,songName = songTitle,artistName = artistName,albumName = albumTitle)
         return when(item.itemId) {
             R.id.remove -> {
-                songNames.removeAt(songPosition)
-                list.removeAt(songPosition)
-                adapter.notifyDataSetChanged()
-                if (adapter.count == 0){
-                    notification()
-                }
-                Toast.makeText(this, R.string.delete, Toast.LENGTH_SHORT).show()
+                val dialogBuilder = AlertDialog.Builder(this)
+                    .setTitle("Delete? $songTitle")
+                    .setNegativeButton("No", DialogInterface.OnClickListener{
+                            dialogInterface, i ->
+
+                    })
+                    .setPositiveButton("Yes", DialogInterface.OnClickListener{
+                            dialogInterface, i ->
+                        val albumObject= stringArray(songId, songTitle, artistName,albumTitle)
+                        dbqueueHandler.delete(albumObject)
+                        Toast.makeText(this, R.string.delete, Toast.LENGTH_SHORT).show()
+                    })
+                dialogBuilder.show()
                 true
             }
             else -> return super.onOptionsItemSelected(item)

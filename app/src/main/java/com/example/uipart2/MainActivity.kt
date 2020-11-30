@@ -1,5 +1,6 @@
 package com.example.uipart2
 
+import android.content.DialogInterface
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -7,27 +8,27 @@ import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.ListView
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
+import com.example.uipart2.adapter.listAdapter
 import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
-    var queuedList = arrayListOf<String>()
-    val songNames = arrayListOf<String>("So What", "Fly me to the Moon", "Mood Indigo", "Take Five", "Strange Fruit",
-        "Round Midnight", "Giant Steps", "Only Human", "Don't Start Now", "7 Rings", "Sucker", "I Don't Care", "Bad Guy", "Juice", "Talk",
-        "Wow", "Fancy", "Amazed", "The Dance", "The Gambler", "Sixteen Tons", "I Hope", "I Hope You Dance")
+    var queuedList = arrayListOf<stringArray>()
     var list = mutableListOf<stringArray>()
+    val dbHandler = songTableHander(this)
+    lateinit var songTitle : String
+    lateinit var artistName : String
+    lateinit var albumTitle : String
     lateinit var adapter: listAdapter
+    lateinit var songListView: ListView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setTitle("UIElement_HOME")
-        val songListView = findViewById<ListView>(R.id.song_list)
-        for (i in songNames){
-            list.add(stringArray(i))
-        }
+        list = dbHandler.readAll()
+        songListView = findViewById<ListView>(R.id.song_list)
         adapter = listAdapter(this,R.layout.main_row, list)
         songListView.adapter =  adapter
         registerForContextMenu(songListView)
@@ -43,9 +44,6 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.queue -> {
                 val intent1 = Intent(this, QueuedSongsActivity::class.java)
-                val bundle = Bundle()
-                bundle.putSerializable("songNames",queuedList)
-                intent1.putExtra("bundle", bundle)
                 startActivity(intent1)
                 true
             }
@@ -56,9 +54,45 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, AlbumsActivity::class.java))
                 true
             }
+            R.id.add_song->{
+                addDialog()
+                true
+            }
             else -> return super.onOptionsItemSelected(item)
         }
 
+    }
+    fun addDialog(): AlertDialog {
+        val dialogBuilder = AlertDialog.Builder(this)
+        val inflater = this.layoutInflater
+        val view = inflater.inflate(R.layout.main_add_song, null)
+        dialogBuilder.setView(view)
+                .setTitle("Add Song")
+                .setNegativeButton("Cancel", DialogInterface.OnClickListener{ dialogInterface, i ->
+
+                })
+                .setPositiveButton("Add Song", DialogInterface.OnClickListener{
+                    dialogInterface, i ->
+                    val inputTitle = view.findViewById<EditText>(R.id.songTitle)
+                    val inputArtist = view.findViewById<EditText>(R.id.artistName)
+                    val inputAlbum = view.findViewById<EditText>(R.id.albumName)
+                    songTitle = inputTitle.text.toString()
+                    artistName = inputArtist.text.toString()
+                    albumTitle = inputArtist.text.toString()
+                    if (albumTitle.isEmpty() == true){
+                        albumTitle = "Unknown"
+                    }
+                    else if (artistName.isEmpty() == true){
+                        artistName = "Unknown"
+                    }
+                    else if (albumTitle.isEmpty() == true){
+                        albumTitle = "Unknown"
+                    }
+                    val albumObject= stringArray(songName = albumTitle,artistName = artistName, albumName = albumTitle)
+                    dbHandler.create(albumObject)
+                })
+        adapter.notifyDataSetChanged()
+        return dialogBuilder.show()
     }
 
     override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
@@ -69,28 +103,76 @@ class MainActivity : AppCompatActivity() {
     override fun onContextItemSelected(item: MenuItem): Boolean {
         val info = item.menuInfo as AdapterView.AdapterContextMenuInfo
         val songPosition = info.position
-        val song = songNames.get(songPosition)
+        val songId = list[songPosition].id
+        dbHandler.readOne(songId)
+        songTitle = list[songPosition].songName
+        artistName = list[songPosition].artistName
+        albumTitle = list[songPosition].albumName
+        val song = stringArray(songId,songName = songTitle,artistName = artistName,albumName = albumTitle)
         return when(item.itemId){
             R.id.add_queue -> {
-                queuedList.add(song)
+                val dbqueueHandler = queueTableHandler(this)
+                dbqueueHandler.create(song)
                 val  snack = Snackbar.make(findViewById(R.id.coordinatorLayoutroot), "Add to QUEUE", Snackbar.LENGTH_LONG)
                         .setAction("View",View.OnClickListener {
                             val intent1 = Intent(this, QueuedSongsActivity::class.java)
-                            val bundle = Bundle()
-                            bundle.putSerializable("songNames",queuedList)
-                            intent1.putExtra("bundle", bundle)
                             startActivity(intent1)
                         })
                 snack.show()
                 true
                 }
             R.id.delete ->{
-                list.removeAt(songPosition)
-                adapter.notifyDataSetChanged()
-                Toast.makeText(this,R.string.delete, Toast.LENGTH_SHORT).show()
+                val dialogBuilder = AlertDialog.Builder(this)
+                        .setTitle("Delete? $songTitle")
+                        .setNegativeButton("No", DialogInterface.OnClickListener{
+                            dialogInterface, i ->
+
+                        })
+                        .setPositiveButton("Yes", DialogInterface.OnClickListener{
+                            dialogInterface, i ->
+                            val albumObject= stringArray(songId, songTitle, artistName,albumTitle)
+                            dbHandler.delete(albumObject)
+                        })
+                dialogBuilder.show()
+                true
+            }
+            R.id.edit->{
+                val inflater = this.layoutInflater
+                val view = inflater.inflate(R.layout.main_edit_text, null)
+                val inputTitle = view.findViewById<EditText>(R.id.songTitle)
+                val inputArtist = view.findViewById<EditText>(R.id.artistName)
+                val inputAlbum = view.findViewById<EditText>(R.id.albumName)
+                inputTitle.setText(songTitle)
+                inputArtist.setText(artistName)
+                inputAlbum.setText(albumTitle)
+                val dialogBuilder = AlertDialog.Builder(this)
+                        .setTitle("Edit Song")
+                        .setView(view)
+                        .setNegativeButton("Cancel", DialogInterface.OnClickListener{
+                            dialogInterface,i ->
+                        })
+                        .setPositiveButton("Edit", DialogInterface.OnClickListener {
+                            dialogInterface, i ->
+                            songTitle = inputTitle.text.toString()
+                            albumTitle = inputAlbum.text.toString()
+                            artistName = inputArtist.text.toString()
+                            if (albumTitle.isEmpty() == true){
+                                albumTitle = "Unknown"
+                            }
+                            else if (songTitle.isEmpty() == true){
+                                songTitle = "Unknown"
+                            }
+                            else if(artistName.isEmpty() == true){
+                                artistName = "Unknown"
+                            }
+                            val albumObject= stringArray(songId,songTitle,artistName,albumTitle)
+                            dbHandler.update(albumObject)
+                        })
+                dialogBuilder.show()
                 true
             }
             else -> return super.onContextItemSelected(item)
         }
+        adapter.notifyDataSetChanged()
     }
 }

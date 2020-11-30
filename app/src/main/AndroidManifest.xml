@@ -9,9 +9,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.UIpart2">
-        <activity android:name=".popAlbum"></activity>
+        <activity android:name=".songAlbumActivity"></activity>
+        <activity android:name=".popAlbum" />
         <activity android:name=".jazzAlbum" />
-        <activity android:name=".CountryAlbum" />
+        <activity android:name=".albumSongActivity" />
         <activity android:name=".AlbumsActivity" />
         <activity android:name=".QueuedSongsActivity" />
         <activity android:name=".MainActivity">

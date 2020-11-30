@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/queue"
         android:title= "QUEUE"
-        app:showAsAction="always"/>
+        app:showAsAction="never"/>
     <item android:id="@+id/songs"
         android:title="Songs"
         app:showAsAction="never"
@@ -11,4 +11,7 @@
     <item android:id="@+id/albums"
         android:title="Albums"
         app:showAsAction="never"/>
+    <item android:id="@+id/add_song"
+        android:title="Add Song"
+        app:showAsAction="always"/>
 </menu>
